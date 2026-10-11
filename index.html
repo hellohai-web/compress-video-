@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Compressor - Clean Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col justify-between">
+
+    <!-- Header Ringkas -->
+    <header class="bg-white border-b border-gray-200 py-4 px-6 flex justify-between items-center shadow-sm">
+        <div class="flex items-center space-x-2">
+            <div class="bg-emerald-600 text-white p-2 rounded-lg font-bold text-xl flex items-center justify-center w-10 h-10">
+                <i class="fa-solid fa-compress"></i>
+            </div>
+            <span class="text-xl font-black tracking-tight text-gray-900">Video<span class="text-emerald-600">Compressor</span></span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-3xl mx-auto px-4 py-10 w-full flex-grow">
+
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Fast Video Compressor</h1>
+            <p class="text-gray-500 text-sm">Reduce file size without dropping original FPS and video quality.</p>
+        </div>
+
+        <!-- Dropzone Box -->
+        <div id="dropzone" class="bg-white border-2 border-dashed border-emerald-400 hover:border-emerald-600 rounded-2xl p-8 text-center cursor-pointer transition shadow-sm mb-6">
+            <input type="file" id="fileInput" class="hidden" accept="video/*">
+            <div class="flex flex-col items-center justify-center space-y-3">
+                <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-xl shadow-inner">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-gray-800">Click to Choose Video or Drag Here</h3>
+                    <p class="text-xs text-gray-400 mt-1">Supports MP4, MKV, MOV, HEVC files</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="browserWarning" class="hidden bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl p-4 mb-6"></div>
+
+        <!-- File Selected Box -->
+        <div id="fileInfoBox" class="hidden bg-white border border-gray-200 rounded-xl p-4 mb-6 flex items-center justify-between shadow-sm">
+            <div class="flex items-center space-x-3 overflow-hidden">
+                <div class="bg-emerald-100 text-emerald-600 p-3 rounded-lg text-lg">
+                    <i class="fa-solid fa-file-video"></i>
+                </div>
+                <div class="truncate">
+                    <h4 id="fileName" class="font-bold text-sm text-gray-800 truncate"></h4>
+                    <span id="fileSize" class="text-xs text-gray-500"></span>
+                    <div id="fileMeta" class="text-xs text-gray-400 truncate"></div>
+                </div>
+            </div>
+            <button id="removeFileBtn" class="text-gray-400 hover:text-red-500 p-2 transition" type="button" aria-label="Remove video">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        </div>
+
+        <!-- Semua tetapan tersembunyi sehingga video dipilih -->
+        <div id="optionsWrap" class="hidden">
+
+            <!-- Tetapan Lanjutan -->
+            <fieldset id="settingsFieldset" class="min-w-0">
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
+                <h3 class="font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100 flex items-center">
+                    <i class="fa-solid fa-sliders text-emerald-600 mr-2"></i> Settings
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Codec -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1" for="codecSelect">Video Codec</label>
+                        <select id="codecSelect" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="avc" selected>H.264 / AVC (Standard Compatible)</option>
+                            <option value="hevc">H.265 / HEVC (High Compression)</option>
+                            <option value="vp9">VP9</option>
+                            <option value="av1">AV1 (Smallest, slower)</option>
+                        </select>
+                        <p id="encoderChip" class="text-xs text-emerald-700 mt-1"><i class="fa-solid fa-microchip mr-1"></i><span id="encoderText">Encoder: AVC (Hardware)</span></p>
+                    </div>
+
+                    <!-- Tetapan FPS -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1" for="fpsSelect">Frame Rate (FPS)</label>
+                        <select id="fpsSelect" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="original" selected>Keep Original FPS (No Drop)</option>
+                            <option value="60">Lock to 60 FPS</option>
+                            <option value="30">Lock to 30 FPS</option>
+                        </select>
+                    </div>
+
+                    <!-- Compression Method -->
+                    <div class="md:col-span-2 mt-2">
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1" for="methodSelect">Compression Method</label>
+                        <select id="methodSelect" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="size" selected>Target a file size (MB)</option>
+                            <option value="quality">Target a video quality</option>
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">Choose "Target a file size" to get an output close to the size you enter. Choose "Target a video quality" when quality is of importance.</p>
+                    </div>
+
+                    <!-- Target Saiz MB Input -->
+                    <div id="sizeContainer" class="md:col-span-2 mt-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-bold text-gray-700 uppercase tracking-wider" for="targetSizeInput">Target Size (MB)</label>
+                            <span id="targetSizeLabel" class="text-xs text-gray-400">Maximum 10240 MB (10 GB)</span>
+                        </div>
+                        <input type="number" id="targetSizeInput" placeholder="Contoh: 15 (dalam MB)" min="1" max="10240" step="any" inputmode="decimal" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+
+                    <!-- Resolution (mod quality) -->
+                    <div id="resolutionContainer" class="hidden md:col-span-2 mt-2">
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1" for="resolutionSelect">Resolution</label>
+                        <select id="resolutionSelect" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="0" selected>Keep Original</option>
+                            <option value="1080">1080 p (1920x1080)</option>
+                            <option value="720">720 p (1280x720)</option>
+                            <option value="480">480 p (854x480)</option>
+                            <option value="360">360 p (640x360)</option>
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">Videos are never enlarged. A smaller resolution gives a smaller file.</p>
+                    </div>
+
+                    <!-- Target Quality Slider (mod quality) -->
+                    <div id="sliderContainer" class="hidden md:col-span-2 mt-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-bold text-gray-700 uppercase tracking-wider" for="sizeSlider">Target Video Quality</label>
+                            <span id="sliderValue" class="text-sm font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Balanced</span>
+                        </div>
+                        <input type="range" id="sizeSlider" min="1" max="5" step="1" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600">
+                        <div class="flex justify-between text-xs text-gray-400 mt-1"><span>Smaller file</span><span>Better quality</span></div>
+                    </div>
+
+                    <!-- Compatibility -->
+                    <div class="md:col-span-2 mt-2">
+                        <label class="flex items-start space-x-3 cursor-pointer">
+                            <input type="checkbox" id="compatCheck" class="mt-1 h-4 w-4 accent-emerald-600">
+                            <span>
+                                <span class="block text-sm font-bold text-gray-800">Make video compatible with old devices?</span>
+                                <span class="block text-xs text-gray-400">Encodes the video using more conservative settings (30 FPS maximum, regular key frames) that older phones, TVs, and media players are more likely to support. Your resolution is not changed and you can still pick any video codec. This performs less compression, so only turn it on if you're targeting a very old device.</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            </fieldset>
+
+            <!-- Button Proses -->
+            <div class="text-center">
+                <button id="compressBtn" disabled class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl shadow-md transition text-base mb-2" type="button">
+                    <i class="fa-solid fa-compress mr-2"></i> Compress Video Now
+                </button>
+                <div id="statusText" class="text-xs text-gray-500 font-medium" role="status" aria-live="polite"></div>
+
+                <!-- Progress bar -->
+                <div id="progressBox" class="hidden mt-4 text-left bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                    <div class="flex justify-between text-xs font-semibold text-gray-600 mb-2">
+                        <span id="progressLabel">Compressing video...</span>
+                        <span id="progressPct">0%</span>
+                    </div>
+                    <div class="w-full h-3 bg-gray-200 rounded-full overflow-hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressTrack">
+                        <div id="progressBar" class="h-full bg-emerald-600 rounded-full transition-all duration-200" style="width:0%"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="text-xs text-gray-400">Keep this tab open until it finishes.</span>
+                        <button id="cancelBtn" type="button" class="text-xs font-semibold text-gray-500 hover:text-red-500 transition">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- Result -->
+                <div id="resultBox" class="hidden mt-4 bg-white border border-emerald-200 rounded-xl p-4 text-left shadow-sm">
+                    <div class="font-bold text-sm text-gray-800 mb-3"><i class="fa-solid fa-circle-check text-emerald-600 mr-2"></i>Compression Complete</div>
+                    <video id="previewVideo" class="w-full rounded-lg bg-black max-h-96" controls playsinline preload="metadata"></video>
+                    <p id="previewNote" class="hidden text-xs text-amber-600 mt-2">This browser cannot preview this codec, but the downloaded file is fine.</p>
+                    <div id="resultInfo" class="text-sm text-gray-600 mt-3 mb-3"></div>
+                    <div class="flex items-center gap-3">
+                        <a id="downloadBtn" href="#" download class="flex-1 inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition">
+                            <i class="fa-solid fa-download mr-2"></i> Download Video
+                        </a>
+                        <a id="whatsappBtn" href="https://web.whatsapp.com/" target="_blank" rel="noopener noreferrer" title="Open WhatsApp Web" aria-label="Open WhatsApp Web" class="inline-flex items-center justify-center w-12 h-12 rounded-xl text-white text-2xl transition hover:opacity-90" style="background:#25D366">
+                            <i class="fa-brands fa-whatsapp"></i>
+                        </a>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">Download first, then attach the file in WhatsApp Web.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-4 text-center text-xs text-gray-400">
+        <p>Optimized for clean video output. Your video stays in your browser and is never uploaded.</p>
+    </footer>
+
+    <script type="module">
+        // Compression runs entirely in the browser with WebCodecs (hardware encoder when the device has one).
+        const LIB_URLS = [
+            'https://cdn.jsdelivr.net/npm/mediabunny@1.61.3/+esm',
+            'https://esm.sh/mediabunny@1.61.3'
+        ];
+
+        const $ = (id) => document.getElementById(id);
+        const dropzone = $('dropzone'), fileInput = $('fileInput'), fileInfoBox = $('fileInfoBox');
+        const fileName = $('fileName'), fileSize = $('fileSize'), fileMeta = $('fileMeta');
+        const removeFileBtn = $('removeFileBtn'), optionsWrap = $('optionsWrap'), settingsFieldset = $('settingsFieldset');
+        const codecSelect = $('codecSelect'), fpsSelect = $('fpsSelect'), methodSelect = $('methodSelect');
+        const sizeContainer = $('sizeContainer'), targetSizeInput = $('targetSizeInput');
+        const resolutionContainer = $('resolutionContainer'), resolutionSelect = $('resolutionSelect');
+        const sliderContainer = $('sliderContainer'), sizeSlider = $('sizeSlider'), sliderValue = $('sliderValue');
+        const compatCheck = $('compatCheck'), compressBtn = $('compressBtn'), statusText = $('statusText');
+        const progressBox = $('progressBox'), progressBar = $('progressBar'), progressPct = $('progressPct');
+        const progressLabel = $('progressLabel'), progressTrack = $('progressTrack'), cancelBtn = $('cancelBtn');
+        const resultBox = $('resultBox'), previewVideo = $('previewVideo'), previewNote = $('previewNote');
+        const resultInfo = $('resultInfo'), downloadBtn = $('downloadBtn');
+        const encoderText = $('encoderText'), browserWarning = $('browserWarning');
+
+        const MB = 1024 * 1024;
+        const CODEC_INFO = {
+            avc:  { short: 'AVC',  factor: 1.00 },
+            hevc: { short: 'HEVC', factor: 0.65 },
+            vp9:  { short: 'VP9',  factor: 0.70 },
+            av1:  { short: 'AV1',  factor: 0.55 }
+        };
+        const QUALITY_LEVELS = [
+            { name: 'Smallest', bpp: 0.035 },
+            { name: 'Small',    bpp: 0.055 },
+            { name: 'Balanced', bpp: 0.085 },
+            { name: 'High',     bpp: 0.125 },
+            { name: 'Best',     bpp: 0.180 }
+        ];
+        const defaultButtonHTML = '<i class="fa-solid fa-compress mr-2"></i> Compress Video Now';
+
+        let selectedFile = null;
+        let mediaInfo = null;          // details read from the chosen video
+        let analyzeToken = 0;
+        let isProcessing = false;
+        let activeConversion = null;
+        let canceled = false;
+        let resultUrl = null;
+
+        // ---------- helpers ----------
+        const setStatus = (m) => { statusText.textContent = m; };
+        const even = (n) => Math.max(2, Math.round(n / 2) * 2);
+
+        function formatBytes(bytes) {
+            if (!Number.isFinite(bytes) || bytes < 0) return 'Unknown size';
+            const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            if (bytes === 0) return '0 B';
+            const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+            return `${(bytes / 1024 ** i).toFixed(i === 0 ? 0 : 2)} ${units[i]}`;
+        }
+        function formatDuration(s) {
+            if (!Number.isFinite(s)) return '';
+            const m = Math.floor(s / 60), r = Math.round(s % 60);
+            return m ? `${m}m ${r}s` : `${s.toFixed(1)}s`;
+        }
+        const safeBaseName = (name) => name.replace(/\.[^/.]+$/, '').replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_') || 'video';
+
+        let libPromise = null;
+        function loadLib() {
+            if (!libPromise) {
+                libPromise = (async () => {
+                    let lastError;
+                    for (const url of LIB_URLS) {
+                        try { return await import(url); } catch (e) { lastError = e; }
+                    }
+                    throw lastError || new Error('Could not load the video engine.');
+                })();
+                libPromise.catch(() => { libPromise = null; });
+            }
+            return libPromise;
+        }
+
+        // ---------- browser support ----------
+        const supportsWebCodecs = typeof VideoEncoder !== 'undefined' && typeof VideoDecoder !== 'undefined';
+        if (!supportsWebCodecs) {
+            browserWarning.textContent = 'This browser does not support in-browser video encoding (WebCodecs). Please use the latest Chrome, Edge or Safari.';
+            browserWarning.classList.remove('hidden');
+        } else {
+            loadLib().catch(() => {}); // start downloading the engine while the user picks a file
+        }
+
+        function updateEncoderText() {
+            encoderText.textContent = `Encoder: ${CODEC_INFO[codecSelect.value].short} (Hardware)`;
+        }
+        codecSelect.addEventListener('change', updateEncoderText);
+
+        // Grey out codecs this device cannot encode.
+        async function markSupportedCodecs(width, height) {
+            try {
+                const { canEncodeVideo, Quality } = await loadLib();
+                for (const option of codecSelect.options) {
+                    const ok = await canEncodeVideo(option.value, {
+                        width: even(width), height: even(height), quality: new Quality({ bitrate: 5e6 })
+                    }).catch(() => false);
+                    option.disabled = !ok;
+                    option.textContent = option.textContent.replace(/ — not supported on this device$/, '') + (ok ? '' : ' — not supported on this device');
+                }
+                if (codecSelect.selectedOptions[0]?.disabled) {
+                    const firstOk = [...codecSelect.options].find(o => !o.disabled);
+                    if (firstOk) codecSelect.value = firstOk.value;
+                }
+                updateEncoderText();
+            } catch (_) { /* keep all options enabled */ }
+        }
+
+        // ---------- file selection ----------
+        function resetUI() {
+            clearResult();
+            progressBox.classList.add('hidden');
+            fileInput.value = '';
+            selectedFile = null;
+            mediaInfo = null;
+            analyzeToken++;
+            fileInfoBox.classList.add('hidden');
+            optionsWrap.classList.add('hidden');
+            dropzone.classList.remove('hidden');
+            compressBtn.disabled = true;
+            fileMeta.textContent = '';
+            setStatus('');
+        }
+
+        function clearResult() {
+            resultBox.classList.add('hidden');
+            previewNote.classList.add('hidden');
+            previewVideo.removeAttribute('src');
+            previewVideo.load();
+            downloadBtn.removeAttribute('href');
+            resultInfo.textContent = '';
+            if (resultUrl) { URL.revokeObjectURL(resultUrl); resultUrl = null; }
+        }
+
+        async function analyzeFile(file) {
+            const token = ++analyzeToken;
+            fileMeta.textContent = 'Reading video details...';
+            try {
+                const { Input, BlobSource, ALL_FORMATS } = await loadLib();
+                const input = new Input({ formats: ALL_FORMATS, source: new BlobSource(file) });
+                const videoTrack = await input.getPrimaryVideoTrack();
+                if (!videoTrack) throw new Error('This file has no video track.');
+                const audioTrack = await input.getPrimaryAudioTrack();
+                const duration = await input.computeDuration();
+                const width = await videoTrack.getDisplayWidth();
+                const height = await videoTrack.getDisplayHeight();
+                const codec = await videoTrack.getCodec();
+                const canDecode = await videoTrack.canDecode();
+
+                let fps = null, videoBitrate = null, audioBitrate = null, audioCodec = null;
+                try {
+                    const s = await videoTrack.computePacketStats(300);
+                    fps = s.averagePacketRate ?? s.packetsPerSecond ?? null;
+                    videoBitrate = s.averageBitrate || null;
+                } catch (_) {}
+                if (audioTrack) {
+                    audioCodec = await audioTrack.getCodec().catch(() => null);
+                    try { audioBitrate = (await audioTrack.computePacketStats(300)).averageBitrate || null; } catch (_) {}
+                }
+                if (token !== analyzeToken) return;
+
+                mediaInfo = {
+                    duration, width, height, codec, canDecode, hasAudio: Boolean(audioTrack), audioCodec,
+                    fps: fps && fps > 1 ? Math.round(fps) : null,
+                    videoBitrate: videoBitrate || (duration > 0 ? (file.size * 8) / duration : null),
+                    audioBitrate
+                };
+
+                const parts = [`${width}×${height}`];
+                if (mediaInfo.fps) parts.push(`${mediaInfo.fps} FPS`);
+                parts.push(formatDuration(duration));
+                if (codec) parts.push(String(codec).toUpperCase());
+                fileMeta.textContent = parts.filter(Boolean).join(' · ');
+
+                if (!canDecode) {
+                    setStatus('This browser cannot read this video\'s codec (' + String(codec || 'unknown').toUpperCase() + '). Try Safari, or Chrome/Edge on a device with hardware support.');
+                    compressBtn.disabled = true;
+                } else {
+                    compressBtn.disabled = false;
+                    setStatus('Choose your settings, then press Compress.');
+                    markSupportedCodecs(width, height);
+                }
+            } catch (error) {
+                if (token !== analyzeToken) return;
+                console.error(error);
+                mediaInfo = null;
+                fileMeta.textContent = '';
+                compressBtn.disabled = true;
+                setStatus('Could not read this video: ' + (error?.message || error));
+            }
+        }
+
+        function handleFile(file) {
+            if (isProcessing) return;
+            const isVideo = file.type.startsWith('video/') || /\.(mp4|mkv|mov|webm|avi|m4v|3gp|ts|mts|hevc)$/i.test(file.name);
+            if (!isVideo) { setStatus('Please choose a valid video file.'); return; }
+
+            clearResult();
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatBytes(file.size);
+            dropzone.classList.add('hidden');
+            fileInfoBox.classList.remove('hidden');
+            optionsWrap.classList.remove('hidden');   // settings appear only now
+            compressBtn.disabled = true;
+            setStatus('');
+            updateEncoderText();
+            if (supportsWebCodecs) analyzeFile(file);
+            else setStatus('This browser does not support in-browser encoding.');
+        }
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => { if (e.target.files?.length) handleFile(e.target.files[0]); });
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-emerald-600', 'bg-emerald-50/50'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-emerald-600', 'bg-emerald-50/50'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('border-emerald-600', 'bg-emerald-50/50');
+            const files = e.dataTransfer?.files;
+            if (files?.length) handleFile(files[0]);
+        });
+        removeFileBtn.addEventListener('click', (e) => { e.stopPropagation(); if (!isProcessing) resetUI(); });
+
+        // ---------- settings ----------
+        methodSelect.addEventListener('change', () => {
+            const bySize = methodSelect.value === 'size';
+            sizeContainer.classList.toggle('hidden', !bySize);
+            resolutionContainer.classList.toggle('hidden', bySize);
+            sliderContainer.classList.toggle('hidden', bySize);
+        });
+        sizeSlider.addEventListener('input', () => {
+            sliderValue.textContent = QUALITY_LEVELS[Number(sizeSlider.value) - 1].name;
+        });
+
+        // ---------- progress ----------
+        function setProgress(fraction) {
+            const pct = Math.max(0, Math.min(100, Math.round(fraction * 100)));
+            progressBar.style.width = pct + '%';
+            progressPct.textContent = pct + '%';
+            progressTrack.setAttribute('aria-valuenow', String(pct));
+        }
+
+        // ---------- compression ----------
+        function planEncode(lib) {
+            const info = mediaInfo;
+            const codec = codecSelect.value;
+            const bySize = methodSelect.value === 'size';
+            const { Quality } = lib;
+
+            // Output dimensions (only the quality method resizes; never enlarge).
+            const shortSide = bySize ? 0 : Number(resolutionSelect.value);
+            const video = { codec, hardwareAcceleration: 'prefer-hardware', keyFrameInterval: 2 };
+            let outW = info.width, outH = info.height;
+            const inShort = Math.min(info.width, info.height);
+            if (shortSide && inShort > shortSide) {
+                const scale = shortSide / inShort;
+                outW = even(info.width * scale);
+                outH = even(info.height * scale);
+                if (info.width < info.height) video.width = shortSide; else video.height = shortSide;
+            }
+
+            // Frame rate: only ever lower it. "Old devices" mode caps at 30.
+            const lockedFps = fpsSelect.value === 'original' ? 0 : Number(fpsSelect.value);
+            let fpsLimit = lockedFps;
+            if (compatCheck.checked) fpsLimit = lockedFps ? Math.min(lockedFps, 30) : 30;
+            let outFps = info.fps || 30;
+            // If the source rate is unknown, only an explicit "Lock to" choice is applied.
+            const mustLimit = info.fps ? info.fps > fpsLimit : Boolean(lockedFps);
+            if (fpsLimit && mustLimit) { video.frameRate = fpsLimit; outFps = fpsLimit; }
+
+            // Bitrate.
+            let videoBitrate;
+            const audio = {};
+            let useAudioOptions = false;
+            if (bySize) {
+                const targetBytes = parseFloat(targetSizeInput.value) * MB;
+                const totalBps = (targetBytes * 8 * 0.94) / info.duration;
+                let audioBps = info.hasAudio ? (info.audioCodec === 'aac' && info.audioBitrate ? info.audioBitrate : 128e3) : 0;
+                // Audio would eat too much of a small budget: re-encode it smaller.
+                if (info.hasAudio && audioBps > totalBps * 0.2) {
+                    audioBps = totalBps > 600e3 ? 96e3 : 64e3;
+                    audio.quality = new Quality({ bitrate: audioBps });
+                    useAudioOptions = true;
+                }
+                videoBitrate = Math.max(100e3, Math.floor(totalBps - audioBps));
+            } else {
+                const level = QUALITY_LEVELS[Number(sizeSlider.value) - 1];
+                const pixelsPerSecond = outW * outH * outFps;
+                videoBitrate = pixelsPerSecond * level.bpp * CODEC_INFO[codec].factor;
+                // The result should never be larger than the original video stream.
+                if (info.videoBitrate && !shortSide) videoBitrate = Math.min(videoBitrate, info.videoBitrate * 0.9);
+                videoBitrate = Math.max(150e3, Math.floor(videoBitrate));
+            }
+            video.quality = new Quality({ bitrate: videoBitrate });
+            return { video, audio: useAudioOptions ? audio : null, videoBitrate };
+        }
+
+        function describeDiscard(conversion) {
+            const reasons = conversion.discardedTracks.map(d => `${d.track?.type || 'track'}: ${d.reason}`).join(', ');
+            if (/undecodable/.test(reasons)) return 'This browser cannot decode this video\'s codec. Try another browser or device.';
+            if (/no_encodable_target_codec/.test(reasons)) return 'This device cannot encode the selected codec. Choose H.264 / AVC.';
+            return 'The video could not be converted (' + reasons + ').';
+        }
+
+        function setBusy(busy) {
+            isProcessing = busy;
+            settingsFieldset.disabled = busy;
+            removeFileBtn.classList.toggle('opacity-40', busy);
+            compressBtn.disabled = busy;
+            compressBtn.innerHTML = busy
+                ? '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Compressing...'
+                : defaultButtonHTML;
+        }
+
+        async function compress() {
+            if (!selectedFile || !mediaInfo || isProcessing) return;
+
+            if (methodSelect.value === 'size') {
+                const mb = parseFloat(targetSizeInput.value);
+                if (isNaN(mb) || mb <= 0) { setStatus('Please enter a Target Size (MB), or switch to "Target a video quality".'); targetSizeInput.focus(); return; }
+                if (mb > 10240) { setStatus('Target size can be at most 10240 MB.'); return; }
+                if (mb * MB >= selectedFile.size) { setStatus(`Target size must be smaller than the original video (${formatBytes(selectedFile.size)}).`); return; }
+            }
+
+            clearResult();
+            canceled = false;
+            setBusy(true);
+            setProgress(0);
+            progressLabel.textContent = 'Preparing...';
+            progressBox.classList.remove('hidden');
+            setStatus('');
+            const startedAt = performance.now();
+
+            try {
+                const lib = await loadLib();
+                const { Input, BlobSource, ALL_FORMATS, Output, Mp4OutputFormat, BufferTarget, Conversion } = lib;
+                const plan = planEncode(lib);
+
+                const input = new Input({ formats: ALL_FORMATS, source: new BlobSource(selectedFile) });
+                const output = new Output({ format: new Mp4OutputFormat(), target: new BufferTarget() });
+                const options = { input, output, video: plan.video };
+                if (plan.audio) options.audio = plan.audio;
+
+                const conversion = await Conversion.init(options);
+                if (!conversion.isValid) throw new Error(describeDiscard(conversion));
+                activeConversion = conversion;
+
+                progressLabel.textContent = 'Compressing video...';
+                conversion.onProgress = (p) => setProgress(p);
+                await conversion.execute();
+                activeConversion = null;
+                setProgress(1);
+
+                const buffer = output.target.buffer;
+                const blob = new Blob([buffer], { type: 'video/mp4' });
+                resultUrl = URL.createObjectURL(blob);
+
+                previewVideo.onerror = () => previewNote.classList.remove('hidden');
+                previewVideo.src = resultUrl;
+                downloadBtn.href = resultUrl;
+                downloadBtn.download = `${safeBaseName(selectedFile.name)}_compressed.mp4`;
+
+                const saved = Math.max(0, (1 - blob.size / selectedFile.size) * 100);
+                resultInfo.innerHTML =
+                    `<div><span class="text-gray-400">Original:</span> <b>${formatBytes(selectedFile.size)}</b> &nbsp;→&nbsp; ` +
+                    `<span class="text-gray-400">Compressed:</span> <b class="text-emerald-700">${formatBytes(blob.size)}</b></div>` +
+                    `<div class="text-xs text-gray-500 mt-1">${blob.size < selectedFile.size ? `${saved.toFixed(1)}% smaller` : 'Output is not smaller than the original — try a lower target or quality.'}` +
+                    ` · took ${formatDuration((performance.now() - startedAt) / 1000)}</div>`;
+
+                progressBox.classList.add('hidden');
+                resultBox.classList.remove('hidden');
+                setStatus('Compression finished.');
+                resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } catch (error) {
+                activeConversion = null;
+                progressBox.classList.add('hidden');
+                if (canceled || error?.name === 'ConversionCanceledError') {
+                    setStatus('Compression canceled.');
+                } else {
+                    console.error(error);
+                    setStatus('Error: ' + (error?.message || error));
+                }
+            } finally {
+                setBusy(false);
+                compressBtn.disabled = !(selectedFile && mediaInfo && mediaInfo.canDecode);
+            }
+        }
+
+        compressBtn.addEventListener('click', compress);
+        cancelBtn.addEventListener('click', async () => {
+            canceled = true;
+            try { await activeConversion?.cancel(); } catch (_) {}
+        });
+
+        window.addEventListener('beforeunload', (e) => { if (isProcessing) { e.preventDefault(); e.returnValue = ''; } });
+    </script>
+</body>
+</html>
